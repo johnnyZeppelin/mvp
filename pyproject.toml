@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-select = ["E", "F", "I"]   # errors, pyflakes, import order
+ignore = ["E203"]                  # if you later adopt black
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+mypy_path = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+  "integration: marks tests as integration (deselect with '-m \"not integration\"')",
+  "property: property-based tests"
+]
