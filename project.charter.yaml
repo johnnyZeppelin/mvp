@@ -1,0 +1,119 @@
+# project.charter.yaml (schema + starter template)
+# Fill the placeholders (ALL_CAPS) for your project.
+# This file is the single source of truth used by the planner, scaffolder, and tools/oracle.py.
+
+meta:
+  name: YOUR_PROJECT_NAME
+  version: 0.1.0           # semver; bump rules in governance
+  owners: ["YOUR_NAME <you@example.com>"]
+  license: MIT
+  languages: [python]       # e.g., [python, typescript]
+  repo_layout:
+    src_dir: src
+    test_dir: tests
+    docs_dir: docs
+
+runtime:
+  envs:
+    python:
+      version: ">=3.10"
+      package_manager: uv   # uv | pip | poetry
+      entrypoints:
+        - name: app
+          cmd: "python -m YOUR_PROJECT_NAME.cli"
+      commands:
+        lint: "ruff check ."
+        typecheck: "mypy --strict src"
+        unit_test: "pytest -q"
+        integration_test: "pytest -q -m integration"
+        build: "python -m build"       # optional
+        run: "python -m YOUR_PROJECT_NAME"  # optional
+    # typescript:
+    #   node: ">=20"
+    #   package_manager: npm
+    #   commands:
+    #     lint: "eslint ."
+    #     typecheck: "tsc --noEmit"
+    #     unit_test: "npm test"
+
+# Domain knowledge & invariants
+spec:
+  glossary:
+    - term: USER_TERM
+      meaning: One-line definition.
+  constraints:
+    - "All IDs are ULIDs"
+    - "Timestamps are UTC ISO-8601"
+
+# Data types and API contracts that code must implement
+interfaces:
+  datatypes:                  # JSON-Schema-like (lightweight)
+    User:
+      type: object
+      required: [id, email]
+      properties:
+        id: { type: string, format: ulid }
+        email: { type: string, format: email }
+  apis:
+    user_service:
+      module: your_project.services.user_service
+      functions:
+        get_user:
+          signature: "(user_id: str) -> dict"
+          description: "Fetch a user by ulid; raises KeyError if not found."
+          invariants:
+            - "Raises KeyError if not found"
+        create_user:
+          signature: "(email: str) -> dict"
+          description: "Create a user; email must be unique."
+          invariants:
+            - "Email must be unique"
+
+pipelines:
+  - name: ingestion
+    description: "ETL pipeline from source A to normalized store"
+    depends_on: []
+    accepts: [User]
+    produces: [User]
+
+# Required tests the system must satisfy before freezing interfaces
+quality_gates:
+  static:
+    lint: true
+    typecheck: true
+  dynamic:
+    unit_cov_min: 0.70       # coverage threshold (optional)
+    require_property_tests: true
+    require_integration_tests: true
+
+# What the Oracle should run and in what order when you call tools/oracle.py --all
+oracle_plan:
+  steps: ["lint", "typecheck", "unit_test", "integration_test"]
+  fail_fast: true
+  timeouts:
+    per_step_seconds: 600
+
+# Governs when an interface can change and how semver must bump
+governance:
+  progressive_freeze: true
+  freeze_after: ["lint", "typecheck", "unit_test"]
+  breaking_change_requires: ["major_bump"]
+  nonbreaking_change_requires: ["minor_bump"]
+  api_fingerprint_file: ".charter/api_fingerprint.json"
+  public_api_doc: "docs/PUBLIC_APIS.md"
+
+# Documentation contract (keeps long-form writing consistent with code)
+docs_contract:
+  required_sections:
+    - INTRODUCTION.md
+    - ARCHITECTURE.md
+    - API_GUIDE.md
+  claim_tracking: true        # for papers/long docs later
+
+# Evaluation knobs (we’ll use them to emit a summary after Oracle runs)
+evaluation:
+  metrics:
+    - name: RunnabilityAt1
+      formula: "all(steps_ok)"
+    - name: ContractBreakRate
+      formula: "api_breaks / max(commits,1)"
