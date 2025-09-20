@@ -116,9 +116,9 @@ def _ensure_layout(ch: dict) -> tuple[str, Path, Path, Path]:
         cli_py.write_text(CLI_TEMPLATE.format(pkg=pkg), encoding="utf-8")
     return pkg, pkg_dir, src_dir, tests_dir
 
-def _write_service_stub(pkg: str, pkg_dir: Path, module_path: str, functions: list[dict]):
+def _write_service_stub(src_dir: Path, module_path: str, functions: list[dict]):
     rel = Path(module_path.replace(".", "/") + ".py")
-    py_path = (ROOT / "src" / rel)
+    py_path = (src_dir / rel)
     py_path.parent.mkdir(parents=True, exist_ok=True)
 
     funcs_code = []
@@ -159,7 +159,7 @@ def cmd_init():
 
 def cmd_from_charter():
     ch = _load_charter()
-    pkg, pkg_dir, _, tests_dir = _ensure_layout(ch)
+    pkg, pkg_dir, src_dir, tests_dir = _ensure_layout(ch)
     apis = (ch.get("interfaces", {}) or {}).get("apis", {})
     for api_name, cfg in apis.items():
         module = cfg.get("module")
@@ -172,22 +172,22 @@ def cmd_from_charter():
                 "signature": spec.get("signature", "()"),
                 "description": spec.get("description", ""),
             })
-        _write_service_stub(pkg, pkg_dir, module, fns)
+        _write_service_stub(src_dir, module, fns)
         _write_tests(tests_dir, module, fns)
 
 def cmd_module(name: str, kind: str):
     ch = _load_charter()
-    pkg, pkg_dir, _, tests_dir = _ensure_layout(ch)
+    pkg, pkg_dir, src_dir, tests_dir = _ensure_layout(ch)
     if kind not in {"service", "pipeline", "adapter", "util"}:
         print("kind must be one of: service|pipeline|adapter|util")
         sys.exit(1)
     module = f"{pkg}.{kind}s.{name}"
-    _write_service_stub(pkg, pkg_dir, module, [])
+    _write_service_stub(src_dir, module, [])
     _write_tests(tests_dir, module, [])
 
 def cmd_tests_only():
     ch = _load_charter()
-    _, _, _, tests_dir = _ensure_layout(ch)
+    _, _, src_dir, tests_dir = _ensure_layout(ch)
     apis = (ch.get("interfaces", {}) or {}).get("apis", {})
     for _, cfg in apis.items():
         module = cfg.get("module")
