@@ -1,0 +1,49 @@
+[
+  {
+    "id": "layout:ensure",
+    "kind": "scaffold",
+    "target": "layout",
+    "deps": [],
+    "detail": {}
+  },
+  {
+    "id": "impl:user_service",
+    "kind": "impl",
+    "target": "your_project.services.user_service",
+    "deps": [
+      "layout:ensure"
+    ],
+    "detail": {
+      "mode": "template"
+    }
+  },
+  {
+    "id": "test:user_service",
+    "kind": "test",
+    "target": "your_project.services.user_service",
+    "deps": [
+      "impl:user_service"
+    ],
+    "detail": {
+      "types": [
+        "unit",
+        "property"
+      ]
+    }
+  },
+  {
+    "id": "freeze:checkpoint",
+    "kind": "freeze",
+    "target": "apis",
+    "deps": [
+      "test:user_service"
+    ],
+    "detail": {
+      "gates": [
+        "lint",
+        "typecheck",
+        "unit_test"
+      ]
+    }
+  }
+]
